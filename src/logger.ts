@@ -1,65 +1,55 @@
 // ---------------------------------------------------------------------------
-// Throttled, rate-limited plugin logger — compact JSON-compatible output
+// JSONL debug logger — writes structured events to daily log files
 // ---------------------------------------------------------------------------
 
-export type LogLevel = "debug" | "info" | "warn" | "error";
+import { appendFileSync, existsSync, mkdirSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
 
-interface ThrottleState {
-  lastCall: number;
-  count: number;
+export interface DebugEvent {
+  ts: number;
+  type: string;
+  [key: string]: unknown;
 }
 
 /**
- * Create a namespaced logger for an opencode plugin.
+ * Create a JSONL debug logger for an opencode plugin.
+ *
+ * Writes one JSON line per event to ~/.cache/opencode/<plugin>/debug-YYYY-MM-DD.jsonl.
+ * No-op unless CC_DEBUG=true env var is set. Never throws.
  *
  * @example
  * ```ts
- * const log = createLogger("my-plugin");
- * log("info", "init", "plugin loaded", { version: "1.0" });
+ * const log = createJsonlLogger("my-plugin");
+ * log("init", { version: "1.0" });
+ * log("ingest.done", { filesIndexed: 42 });
  * ```
  */
-export function createLogger(pluginName: string) {
-  const throttles = new Map<string, ThrottleState>();
-  let silent = false;
+export function createJsonlLogger(pluginName: string) {
+  const cacheDir = join(homedir(), ".cache", "opencode", pluginName);
 
-  function shouldLog(key: string, intervalMs: number = 60000): boolean {
-    const now = Date.now();
-    const state = throttles.get(key);
-    if (!state || now - state.lastCall > intervalMs) {
-      throttles.set(key, { lastCall: now, count: 1 });
-      return true;
+  function ensureDir(): void {
+    if (!existsSync(cacheDir)) {
+      mkdirSync(cacheDir, { recursive: true });
     }
-    state.count++;
-    return false;
   }
 
-  function logFn(
-    level: LogLevel,
-    key: string,
-    msg: string,
-    data?: Record<string, unknown>,
+  return function logDebugEvent(
+    type: string,
+    payload: Record<string, unknown> = {},
   ): void {
-    if (level === "debug" && process.env.BRAIN_DEBUG !== "true") return;
+    if (process.env.CC_DEBUG !== "true") return;
 
-    if (level === "warn" || level === "info") {
-      if (!shouldLog(key, 60000)) return;
+    try {
+      ensureDir();
+      const date = new Date().toISOString().split("T")[0];
+      const event: DebugEvent = { ts: Date.now(), type, ...payload };
+      const line = JSON.stringify(event) + "\n";
+      appendFileSync(join(cacheDir, `debug-${date}.jsonl`), line, "utf-8");
+    } catch {
+      // Silent — never throw from debug logger
     }
-
-    if (silent && level !== "error") return;
-
-    const timestamp = new Date().toISOString();
-    const prefix = `[${pluginName}] ${timestamp} ${level.toUpperCase()} ${key}`;
-    const payload = data ? ` ${JSON.stringify(data)}` : "";
-    const line = `${prefix} ${msg}${payload}`;
-
-    if (level === "error") console.error(line);
-    else if (level === "warn") console.warn(line);
-    else console.log(line);
-  }
-
-  logFn.setSilent = (val: boolean): void => { silent = val; };
-
-  return logFn;
+  };
 }
 
-export type Logger = ReturnType<typeof createLogger>;
+export type JsonlLogger = ReturnType<typeof createJsonlLogger>;
