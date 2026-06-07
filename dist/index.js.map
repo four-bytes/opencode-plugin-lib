@@ -1,0 +1,10 @@
+{
+  "version": 3,
+  "sources": ["../src/toast.ts"],
+  "sourcesContent": [
+    "import type { PluginInput } from \"@opencode-ai/plugin\";\n\nexport type ToastVariant = \"info\" | \"success\" | \"warning\" | \"error\";\n\n/**\n * Create a toast helper bound to a specific plugin.\n * Silently handles all errors — never breaks plugin operation on UI failure.\n *\n * @example\n * ```ts\n * const toast = createToast(client, \"Brain 🧠\");\n * toast(\"Indexed 42 files\", \"success\");\n * toast(\"Ingest failed\", \"error\");\n * ```\n */\nexport function createToast(\n  client: PluginInput[\"client\"],\n  defaultTitle: string,\n): (message: string, variant?: ToastVariant, title?: string) => void {\n  return (message: string, variant: ToastVariant = \"info\", title?: string): void => {\n    try {\n      client.tui.showToast({\n        body: { message, variant, ...(title ? { title } : { title: defaultTitle }) },\n      }).catch(() => {});\n    } catch {\n      // Never let UI errors break plugin operation\n    }\n  };\n}\n"
+  ],
+  "mappings": ";AAeO,SAAS,CAAW,CACzB,EACA,EACmE,CACnE,MAAO,CAAC,EAAiB,EAAwB,OAAQ,IAAyB,CAChF,GAAI,CACF,EAAO,IAAI,UAAU,CACnB,KAAM,CAAE,UAAS,aAAa,EAAQ,CAAE,OAAM,EAAI,CAAE,MAAO,CAAa,CAAG,CAC7E,CAAC,EAAE,MAAM,IAAM,EAAE,EACjB,KAAM",
+  "debugId": "82EAE188A76FBCDB64756E2164756E21",
+  "names": []
+}
