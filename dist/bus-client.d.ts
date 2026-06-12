@@ -2,19 +2,27 @@
  * Server-side client for the plugin bus.
  * Plugins import BusClient, publish messages via HTTP POST.
  *
+ * Falls back to an in-memory EventBus when the Go binary is not available.
+ *
  * Usage:
  *   const bus = await BusClient.connect();
  *   await bus.publish("tbg/status", { cumulative: 1234 });
  */
 export declare class BusClient {
-    private port;
+    protected port: number;
     private baseUrl;
-    private constructor();
+    protected constructor(port: number);
     /**
      * Connect to the plugin bus. Auto-starts the bus binary if not running.
+     * Falls back to in-memory EventBus if no binary is available.
      * @param timeoutMs — Max time to wait for bus to start (default 5000ms)
      */
     static connect(timeoutMs?: number): Promise<BusClient>;
+    /**
+     * Resolve the bus binary path.
+     * Prefers ~/.local/bin/bus over bare "bus" (which relies on PATH).
+     */
+    private static findBusBinary;
     /**
      * Spawn the bus binary and read the port from stdout.
      */
@@ -33,6 +41,6 @@ export declare class BusClient {
      * Check if the bus is healthy.
      */
     healthCheck(): Promise<boolean>;
-    /** The port the bus is running on */
+    /** The port the bus is running on (0 = in-memory mode) */
     get activePort(): number;
 }

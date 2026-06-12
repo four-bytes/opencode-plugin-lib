@@ -1,29 +1,34 @@
 import { spawn } from "node:child_process";
+import { homedir } from "node:os";
+import { join } from "node:path";
 import { discoverPort } from "./discovery.js";
+import { memoryBus } from "./memory-bus.js";
 import type { BusEnvelope, BusHealth } from "./types.js";
 
 const BASE_URL = "http://127.0.0.1";
-const BUS_BINARY = "bus"; // must be in PATH (~/.local/bin/bus)
 
 /**
  * Server-side client for the plugin bus.
  * Plugins import BusClient, publish messages via HTTP POST.
+ *
+ * Falls back to an in-memory EventBus when the Go binary is not available.
  *
  * Usage:
  *   const bus = await BusClient.connect();
  *   await bus.publish("tbg/status", { cumulative: 1234 });
  */
 export class BusClient {
-  private port: number;
+  protected port: number;
   private baseUrl: string;
 
-  private constructor(port: number) {
+  protected constructor(port: number) {
     this.port = port;
     this.baseUrl = `${BASE_URL}:${port}`;
   }
 
   /**
    * Connect to the plugin bus. Auto-starts the bus binary if not running.
+   * Falls back to in-memory EventBus if no binary is available.
    * @param timeoutMs — Max time to wait for bus to start (default 5000ms)
    */
   static async connect(timeoutMs = 5000): Promise<BusClient> {
@@ -39,22 +44,40 @@ export class BusClient {
     }
 
     // 2. Auto-start the bus binary
-    const port = await BusClient.startBus(timeoutMs);
-    return new BusClient(port);
+    try {
+      const port = await BusClient.startBus(timeoutMs);
+      return new BusClient(port);
+    } catch (err) {
+      // 3. Fallback to in-memory bus (no binary available)
+      console.warn(
+        "[BusClient] Go bus not available, using in-memory fallback:",
+        (err as Error).message,
+      );
+      return new MemoryBusClient();
+    }
+  }
+
+  /**
+   * Resolve the bus binary path.
+   * Prefers ~/.local/bin/bus over bare "bus" (which relies on PATH).
+   */
+  private static findBusBinary(): string {
+    return join(homedir(), ".local", "bin", "bus"); // ~/.local/bin/bus
   }
 
   /**
    * Spawn the bus binary and read the port from stdout.
    */
   private static async startBus(timeoutMs: number): Promise<number> {
+    const binary = BusClient.findBusBinary();
     return new Promise((resolve, reject) => {
-      const child = spawn(BUS_BINARY, [], {
+      const child = spawn(binary, [], {
         stdio: ["ignore", "pipe", "pipe"],
       });
 
       const timer = setTimeout(() => {
         child.kill();
-        reject(new Error(`Bus failed to start within ${timeoutMs}ms`));
+        reject(new Error(`Bus (${binary}) failed to start within ${timeoutMs}ms`));
       }, timeoutMs);
 
       let resolved = false;
@@ -88,7 +111,9 @@ export class BusClient {
       child.on("exit", (code) => {
         if (!resolved) {
           clearTimeout(timer);
-          reject(new Error(`Bus exited with code ${code} before reporting port`));
+          reject(
+            new Error(`Bus exited with code ${code} before reporting port`),
+          );
         }
       });
     });
@@ -151,8 +176,31 @@ export class BusClient {
     }
   }
 
-  /** The port the bus is running on */
+  /** The port the bus is running on (0 = in-memory mode) */
   get activePort(): number {
     return this.port;
+  }
+}
+
+/**
+ * In-memory fallback client. Implements same API as BusClient.
+ * Uses shared MemoryBus singleton — works within same process only.
+ * Port is 0 (sentinel value for in-memory mode).
+ */
+class MemoryBusClient extends BusClient {
+  constructor() {
+    super(0); // port 0 = in-memory mode
+  }
+
+  override async publish(channel: string, payload: unknown): Promise<void> {
+    memoryBus.publish(channel, payload);
+  }
+
+  override async healthCheck(): Promise<boolean> {
+    return true; // memory bus is always healthy
+  }
+
+  override get activePort(): number {
+    return 0; // indicates in-memory mode
   }
 }

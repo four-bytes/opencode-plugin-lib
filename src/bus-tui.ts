@@ -1,4 +1,5 @@
 import { discoverPort } from "./discovery.js";
+import { memoryBus } from "./memory-bus.js";
 import type { BusEnvelope, BusCallback, Unsubscribe } from "./types.js";
 
 const WS_BASE = "ws://127.0.0.1";
@@ -12,6 +13,9 @@ interface SubEntry {
  * TUI-side client for the plugin bus.
  * Connects via WebSocket, subscribes to channels, receives real-time messages.
  *
+ * Falls back to in-memory EventBus when the Go binary is not available
+ * (same-process only, no cross-process IPC, no wildcard matching).
+ *
  * Usage:
  *   const bus = await BusTui.connect();
  *   const unsub = bus.subscribe("tbg/+/status", (msg) => {
@@ -20,7 +24,7 @@ interface SubEntry {
  *   // Later: unsub(); or bus.close();
  */
 export class BusTui {
-  private port: number;
+  protected port: number;
   private ws: WebSocket | null = null;
   private subs: SubEntry[] = [];
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
@@ -28,19 +32,27 @@ export class BusTui {
   private maxReconnectDelay = 30000;
   private closed = false;
 
-  private constructor(port: number) {
+  protected constructor(port: number) {
     this.port = port;
   }
 
   /**
    * Connect to the plugin bus via WebSocket.
-   * Reads port discovery file, opens WebSocket, subscribes to initial channels.
+   * Falls back to in-memory EventBus if the Go binary is not available.
    */
   static async connect(timeoutMs = 5000): Promise<BusTui> {
-    const port = await discoverPort(timeoutMs);
-    const bus = new BusTui(port);
-    await bus.open();
-    return bus;
+    try {
+      const port = await discoverPort(timeoutMs);
+      const bus = new BusTui(port);
+      await bus.open();
+      return bus;
+    } catch (err) {
+      console.warn(
+        "[BusTui] Go bus not available, using in-memory fallback:",
+        (err as Error).message,
+      );
+      return new MemoryBusTui();
+    }
   }
 
   /**
@@ -149,7 +161,7 @@ export class BusTui {
       }
       this.reconnectDelay = Math.min(
         this.reconnectDelay * 2,
-        this.maxReconnectDelay
+        this.maxReconnectDelay,
       );
     }, this.reconnectDelay);
   }
@@ -160,6 +172,40 @@ export class BusTui {
     if (patterns) {
       this.ws.send(JSON.stringify({ subscribe: patterns }));
     }
+  }
+}
+
+/**
+ * In-memory fallback TUI client. Implements same API as BusTui.
+ * Uses shared MemoryBus singleton — works within same process only.
+ * Port is 0 (sentinel value for in-memory mode).
+ *
+ * No WebSocket connection needed — messages flow through the shared
+ * in-process EventBus. Wildcard patterns are NOT supported; use the
+ * real Go bus for cross-process IPC and wildcard matching.
+ */
+class MemoryBusTui extends BusTui {
+  private memorySubs: Map<string, Unsubscribe> = new Map();
+
+  constructor() {
+    super(0); // port 0 = in-memory mode
+  }
+
+  override subscribe(pattern: string, callback: BusCallback): Unsubscribe {
+    const unsub = memoryBus.subscribe(pattern, callback);
+    this.memorySubs.set(pattern, unsub);
+    return unsub;
+  }
+
+  override publish(channel: string, payload: unknown): void {
+    memoryBus.publish(channel, payload);
+  }
+
+  override close(): void {
+    for (const [, unsub] of this.memorySubs) {
+      unsub();
+    }
+    this.memorySubs.clear();
   }
 }
 

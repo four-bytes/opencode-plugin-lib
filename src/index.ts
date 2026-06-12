@@ -12,3 +12,6 @@ export { EventBus } from "./event-bus";
 export { discoverPort } from "./discovery";
 export type { BusEnvelope, BusHealth, PortInfo, BusCallback, Unsubscribe } from "./types";
 export { BusClient } from "./bus-client.js";
+
+// ── In-Memory Bus Fallback ─────────────────────────────────
+export { memoryBus } from "./memory-bus.js";

@@ -3,6 +3,9 @@ import type { BusCallback, Unsubscribe } from "./types.js";
  * TUI-side client for the plugin bus.
  * Connects via WebSocket, subscribes to channels, receives real-time messages.
  *
+ * Falls back to in-memory EventBus when the Go binary is not available
+ * (same-process only, no cross-process IPC, no wildcard matching).
+ *
  * Usage:
  *   const bus = await BusTui.connect();
  *   const unsub = bus.subscribe("tbg/+/status", (msg) => {
@@ -11,17 +14,17 @@ import type { BusCallback, Unsubscribe } from "./types.js";
  *   // Later: unsub(); or bus.close();
  */
 export declare class BusTui {
-    private port;
+    protected port: number;
     private ws;
     private subs;
     private reconnectTimer;
     private reconnectDelay;
     private maxReconnectDelay;
     private closed;
-    private constructor();
+    protected constructor(port: number);
     /**
      * Connect to the plugin bus via WebSocket.
-     * Reads port discovery file, opens WebSocket, subscribes to initial channels.
+     * Falls back to in-memory EventBus if the Go binary is not available.
      */
     static connect(timeoutMs?: number): Promise<BusTui>;
     /**

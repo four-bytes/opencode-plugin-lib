@@ -1,3 +1,16 @@
+/**
+ * Integration tests for the plugin bus (Go binary path).
+ *
+ * These tests start the real Go bus binary and test the full HTTP+WebSocket path.
+ *
+ * NOTE: The MemoryBus fallback (in-memory EventBus) is tested IMPLICITLY
+ * whenever BusClient.connect() or BusTui.connect() is called without the
+ * Go binary available. Both connect() methods log a warning and transparently
+ * fall back to MemoryBusClient / MemoryBusTui. There is no dedicated test
+ * file — the fallback is exercised by any plugin code that runs without the
+ * bus binary in PATH.
+ */
+
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import { spawn, type Subprocess } from "bun";
 import { unlinkSync, existsSync } from "node:fs";
