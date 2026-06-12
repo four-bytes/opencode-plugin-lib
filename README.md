@@ -1,5 +1,9 @@
 # @four-bytes/opencode-plugin-lib
 
+[![npm](https://img.shields.io/npm/v/@four-bytes/opencode-plugin-lib)](https://www.npmjs.com/package/@four-bytes/opencode-plugin-lib)
+[![license](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
+[![bun](https://img.shields.io/badge/runtime-bun-orange)](https://bun.sh)
+
 Shared utilities for [opencode](https://opencode.ai) plugins.
 
 ## Install
@@ -31,3 +35,7 @@ Returns: `(message: string, variant?: "info" | "success" | "warning" | "error", 
 ## License
 
 Apache-2.0
+
+---
+
+> If this plugin saves you tokens, consider leaving a ⭐ on [GitHub](https://github.com/four-bytes/four-opencode-plugin-lib).
