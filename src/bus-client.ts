@@ -1,7 +1,9 @@
+import { spawn } from "node:child_process";
 import { discoverPort } from "./discovery.js";
 import type { BusEnvelope, BusHealth } from "./types.js";
 
 const BASE_URL = "http://127.0.0.1";
+const BUS_BINARY = "bus"; // must be in PATH (~/.local/bin/bus)
 
 /**
  * Server-side client for the plugin bus.
@@ -21,21 +23,91 @@ export class BusClient {
   }
 
   /**
-   * Connect to the plugin bus.
-   * Reads the port discovery file and verifies the bus is healthy.
-   * If bus is not running, attempts to auto-start it.
+   * Connect to the plugin bus. Auto-starts the bus binary if not running.
+   * @param timeoutMs — Max time to wait for bus to start (default 5000ms)
    */
   static async connect(timeoutMs = 5000): Promise<BusClient> {
-    const port = await discoverPort(timeoutMs);
-    const client = new BusClient(port);
-
-    // Verify bus is healthy
-    const healthy = await client.healthCheck();
-    if (!healthy) {
-      throw new Error(`Plugin bus at port ${port} is not healthy`);
+    // 1. Check if bus is already running
+    try {
+      const port = await discoverPort(500); // quick check — 500ms
+      const healthy = await BusClient.checkHealth(port);
+      if (healthy) {
+        return new BusClient(port);
+      }
+    } catch {
+      // Bus not running — will auto-start below
     }
 
-    return client;
+    // 2. Auto-start the bus binary
+    const port = await BusClient.startBus(timeoutMs);
+    return new BusClient(port);
+  }
+
+  /**
+   * Spawn the bus binary and read the port from stdout.
+   */
+  private static async startBus(timeoutMs: number): Promise<number> {
+    return new Promise((resolve, reject) => {
+      const child = spawn(BUS_BINARY, [], {
+        stdio: ["ignore", "pipe", "pipe"],
+      });
+
+      const timer = setTimeout(() => {
+        child.kill();
+        reject(new Error(`Bus failed to start within ${timeoutMs}ms`));
+      }, timeoutMs);
+
+      let resolved = false;
+
+      child.stdout?.on("data", (data: Buffer) => {
+        if (resolved) return;
+        try {
+          const line = data.toString().trim();
+          const info = JSON.parse(line);
+          if (info.port && info.port > 0) {
+            resolved = true;
+            clearTimeout(timer);
+            // Note: child process stays alive (bus server runs)
+            resolve(info.port);
+          }
+        } catch {
+          // Not JSON — wait for next line
+        }
+      });
+
+      child.stderr?.on("data", (data: Buffer) => {
+        // Log stderr but don't fail — Go may print warnings
+        console.warn("[BusClient] bus stderr:", data.toString().trim());
+      });
+
+      child.on("error", (err) => {
+        clearTimeout(timer);
+        reject(new Error(`Failed to spawn bus: ${err.message}`));
+      });
+
+      child.on("exit", (code) => {
+        if (!resolved) {
+          clearTimeout(timer);
+          reject(new Error(`Bus exited with code ${code} before reporting port`));
+        }
+      });
+    });
+  }
+
+  /**
+   * Check if bus at given port is healthy.
+   */
+  private static async checkHealth(port: number): Promise<boolean> {
+    try {
+      const response = await fetch(`${BASE_URL}:${port}/health`, {
+        signal: AbortSignal.timeout(2000),
+      });
+      if (!response.ok) return false;
+      const health: BusHealth = await response.json();
+      return health.status === "ok";
+    } catch {
+      return false;
+    }
   }
 
   /**

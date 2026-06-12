@@ -11,11 +11,18 @@ export declare class BusClient {
     private baseUrl;
     private constructor();
     /**
-     * Connect to the plugin bus.
-     * Reads the port discovery file and verifies the bus is healthy.
-     * If bus is not running, attempts to auto-start it.
+     * Connect to the plugin bus. Auto-starts the bus binary if not running.
+     * @param timeoutMs — Max time to wait for bus to start (default 5000ms)
      */
     static connect(timeoutMs?: number): Promise<BusClient>;
+    /**
+     * Spawn the bus binary and read the port from stdout.
+     */
+    private static startBus;
+    /**
+     * Check if bus at given port is healthy.
+     */
+    private static checkHealth;
     /**
      * Publish a message to a channel.
      * @param channel — Channel name (e.g., "tbg/ses_abc/status")
