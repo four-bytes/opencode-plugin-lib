@@ -8,23 +8,13 @@ export interface TokenMeterProps {
   softLimit: number;
   /** Hard limit (optional) */
   hardLimit?: number;
-  /** Theme colors */
-  colors?: {
-    green?: string;
-    orange?: string;
-    red?: string;
-  };
 }
 
 export function TokenMeter(props: TokenMeterProps) {
   return (
     <>
       <text><b>Tokens 📊</b></text>
-      <ProgressBar
-        current={props.tokens}
-        total={props.softLimit}
-        colors={props.colors}
-      />
+      <ProgressBar current={props.tokens} total={props.softLimit} />
     </>
   );
 }

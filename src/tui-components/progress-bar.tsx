@@ -9,13 +9,12 @@ export interface ProgressBarProps {
   current: number;
   total: number;
   barWidth?: number;
-  colors?: {
-    green?: string;
-    orange?: string;
-    red?: string;
-  };
   showLabel?: boolean;
 }
+
+const FILLED_FG = "#fff";
+const UNFILLED_FG = "#888";
+const TRACK_BG = "#333";
 
 function centerText(s: string, width: number): string {
   if (s.length >= width) return s.slice(0, width);
@@ -31,13 +30,8 @@ function formatNum(n: number): string {
 
 export function ProgressBar(props: ProgressBarProps) {
   const pct = props.total > 0 ? (props.current / props.total) * 100 : 0;
-  const green = props.colors?.green ?? "#4caf50";
-  const orange = props.colors?.orange ?? "#ff9800";
-  const red = props.colors?.red ?? "#f44336";
-  const barColor = pct >= 80 ? red : pct >= 50 ? orange : green;
   const w = props.barWidth ?? 10;
   const showLabel = props.showLabel !== false;
-  const trackColor = "#666";
 
   // Center the percentage text inside the bar and split into per-character
   // <text> elements so the foreground color can advance left-to-right as
@@ -49,9 +43,9 @@ export function ProgressBar(props: ProgressBarProps) {
   return (
     <box flexDirection="row">
       {showLabel && <text>{`${formatNum(props.current)}/${formatNum(props.total)} `}</text>}
-      <box width={w} height={1} backgroundColor="#333" flexDirection="row">
+      <box width={w} height={1} backgroundColor={TRACK_BG} flexDirection="row">
         {chars.map((char: string, i: number) => (
-          <text fg={i < filledCount ? barColor : trackColor}>{char}</text>
+          <text fg={i < filledCount ? FILLED_FG : UNFILLED_FG}>{char}</text>
         ))}
       </box>
     </box>
