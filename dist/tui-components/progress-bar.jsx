@@ -16,7 +16,7 @@ export function ProgressBar(props) {
     const bar = buildBar(pct, w);
     const showLabel = props.showLabel !== false;
     return (<box flexDirection="row">
-      {showLabel && (<text>{`${formatNum(props.current)}/${formatNum(props.total)} (${pct.toFixed(0)}%) `}</text>)}
+      {showLabel && (<text>{`${formatNum(props.current)}/${formatNum(props.total)} (${pct.toFixed(1)}%) `}</text>)}
       <text fg={barColor}>{bar}</text>
     </box>);
 }
