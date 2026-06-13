@@ -37,9 +37,10 @@ export function ProgressBar(props: ProgressBarProps) {
           width={`${Math.min(pct, 100)}%`}
           height={1}
           backgroundColor={barColor}
-        />
+        >
+          <text fg="#fff">{` ${pct.toFixed(1)}% `}</text>
+        </box>
       </box>
-      <text> {pct.toFixed(1)}%</text>
     </box>
   );
 }
