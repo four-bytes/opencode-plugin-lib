@@ -3,5 +3,9 @@ export interface ProgressBarProps {
     total: number;
     barWidth?: number;
     showLabel?: boolean;
+    fillFg?: string;
+    fillBg?: string;
+    unfillFg?: string;
+    unfillBg?: string;
 }
 export declare function ProgressBar(props: ProgressBarProps): import("solid-js").JSX.Element;
