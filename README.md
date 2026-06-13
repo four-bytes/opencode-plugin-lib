@@ -39,3 +39,17 @@ Apache-2.0
 ---
 
 > If this plugin saves you tokens, consider leaving a ⭐ on [GitHub](https://github.com/four-bytes/four-opencode-plugin-lib).
+
+## Bus Channel Convention
+
+Use session-scoped channels for per-session communication:
+
+```
+{plugin}/{sessionID}
+```
+
+**Server side:** Capture sessionID from hook callbacks (`chat.message.input.sessionID`, `event.properties.sessionID`).
+
+**TUI side:** Receive sessionID from slot props (`sidebar_content.props.session_id`).
+
+**Wildcard:** TUI can subscribe to `{plugin}/+` for all sessions.
