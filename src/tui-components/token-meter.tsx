@@ -18,13 +18,13 @@ export interface TokenMeterProps {
 
 export function TokenMeter(props: TokenMeterProps) {
   return (
-    <box flexDirection="column">
+    <>
       <text><b>Tokens 📊</b></text>
       <ProgressBar
         current={props.tokens}
         total={props.softLimit}
         colors={props.colors}
       />
-    </box>
+    </>
   );
 }
