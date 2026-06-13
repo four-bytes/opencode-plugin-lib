@@ -34,7 +34,7 @@
       "types": "./dist/tui.d.ts"
     },
     "./tui-components": {
-      "import": "./dist/tui-components/progress-bar.jsx",
+      "import": "./dist/tui-components/index.js",
       "types": "./dist/tui-components/index.d.ts"
     }
   },
