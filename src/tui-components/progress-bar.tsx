@@ -3,9 +3,9 @@
 /**
  * Reusable progress bar for opencode TUI plugins.
  *
- * Two-column layout (50/50):
+ * Two-column layout (67/33), right-aligned bar:
  *   Left:  "12,345 / 50,000 (24.7%)"
- *   Right: [████████░░░░░░░░░░░░]
+ *   Right: [██████░░░░]
  */
 
 export interface ProgressBarProps {
@@ -37,13 +37,11 @@ export function ProgressBar(props: ProgressBarProps) {
   const showLabel = props.showLabel !== false;
 
   return (
-    <box flexDirection="row" width="100%">
+    <box flexDirection="row" width="100%" justifyContent="space-between">
       {showLabel && (
-        <box width="50%">
-          <text>{`${formatNum(props.current)} / ${formatNum(props.total)} (${pct.toFixed(1)}%)`}</text>
-        </box>
+        <text>{`${formatNum(props.current)} / ${formatNum(props.total)} (${pct.toFixed(1)}%)`}</text>
       )}
-      <box width={showLabel ? "50%" : "100%"} height={h} backgroundColor={props.trackColor ?? "#333"}>
+      <box width={showLabel ? "33%" : "100%"} height={h} backgroundColor={props.trackColor ?? "#333"}>
         <box height={h} width={`${pct}%`} backgroundColor={barColor} />
       </box>
     </box>

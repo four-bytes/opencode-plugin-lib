@@ -2,9 +2,9 @@
 /**
  * Reusable progress bar for opencode TUI plugins.
  *
- * Two-column layout (50/50):
+ * Two-column layout (67/33), right-aligned bar:
  *   Left:  "12,345 / 50,000 (24.7%)"
- *   Right: [████████░░░░░░░░░░░░]
+ *   Right: [██████░░░░]
  */
 export interface ProgressBarProps {
     current: number;

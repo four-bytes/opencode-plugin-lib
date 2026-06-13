@@ -10,11 +10,9 @@ export function ProgressBar(props) {
     const red = props.colors?.red ?? "#f44336";
     const barColor = pct >= 80 ? red : pct >= 50 ? orange : green;
     const showLabel = props.showLabel !== false;
-    return (<box flexDirection="row" width="100%">
-      {showLabel && (<box width="50%">
-          <text>{`${formatNum(props.current)} / ${formatNum(props.total)} (${pct.toFixed(1)}%)`}</text>
-        </box>)}
-      <box width={showLabel ? "50%" : "100%"} height={h} backgroundColor={props.trackColor ?? "#333"}>
+    return (<box flexDirection="row" width="100%" justifyContent="space-between">
+      {showLabel && (<text>{`${formatNum(props.current)} / ${formatNum(props.total)} (${pct.toFixed(1)}%)`}</text>)}
+      <box width={showLabel ? "33%" : "100%"} height={h} backgroundColor={props.trackColor ?? "#333"}>
         <box height={h} width={`${pct}%`} backgroundColor={barColor}/>
       </box>
     </box>);
