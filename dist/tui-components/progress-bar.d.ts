@@ -1,4 +1,3 @@
-/** @jsxImportSource @opentui/solid */
 export interface ProgressBarProps {
     current: number;
     total: number;
