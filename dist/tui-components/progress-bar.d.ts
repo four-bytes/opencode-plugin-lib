@@ -3,8 +3,6 @@ export interface ProgressBarProps {
     current: number;
     total: number;
     barWidth?: number;
-    trackColor?: string;
-    trackBg?: string;
     colors?: {
         green?: string;
         orange?: string;
