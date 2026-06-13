@@ -20,7 +20,9 @@
     "typescript": "^6.0.3"
   },
   "peerDependencies": {
-    "@opencode-ai/plugin": ">=1.16.0"
+    "@opencode-ai/plugin": ">=1.16.0",
+    "@opentui/solid": "^0.4.1",
+    "solid-js": "^1.9.13"
   },
   "exports": {
     ".": {
@@ -28,8 +30,8 @@
       "types": "./dist/index.d.ts"
     },
     "./tui": {
-      "import": "./dist/tui.js",
-      "types": "./dist/tui.d.ts"
+      "types": "./dist/tui-components/index.d.ts",
+      "import": "./dist/tui-components/progress-bar.jsx"
     }
   },
   "files": [
