@@ -4,6 +4,7 @@ export interface ProgressBarProps {
     total: number;
     barWidth?: number;
     trackColor?: string;
+    trackBg?: string;
     colors?: {
         green?: string;
         orange?: string;

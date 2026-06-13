@@ -7,6 +7,7 @@ export interface ProgressBarProps {
   total: number;
   barWidth?: number;
   trackColor?: string;
+  trackBg?: string;
   colors?: {
     green?: string;
     orange?: string;
@@ -32,6 +33,7 @@ export function ProgressBar(props: ProgressBarProps) {
   const barColor = pct >= 80 ? red : pct >= 50 ? orange : green;
   const w = props.barWidth ?? 10;
   const bar = buildBar(pct, w);
+  const track = props.trackBg ?? "#2a2a2a";
   const showLabel = props.showLabel !== false;
 
   return (
@@ -39,7 +41,9 @@ export function ProgressBar(props: ProgressBarProps) {
       {showLabel && (
         <text>{`${formatNum(props.current)}/${formatNum(props.total)} (${pct.toFixed(1)}%) `}</text>
       )}
-      <text fg={barColor}>{bar}</text>
+      <box backgroundColor={track}>
+        <text fg={barColor}>{bar}</text>
+      </box>
     </box>
   );
 }
