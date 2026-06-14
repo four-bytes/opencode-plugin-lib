@@ -43,4 +43,8 @@ export declare class BusClient {
     healthCheck(): Promise<boolean>;
     /** The port the bus is running on (0 = in-memory mode) */
     get activePort(): number;
+    /** Returns a scoped client that prefixes all channels with {service}/ */
+    forService(name: string): BusClient;
+    /** Returns a scoped client that prefixes all channels with {sessionId}/ */
+    forSession(id: string): BusClient;
 }

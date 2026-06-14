@@ -180,6 +180,49 @@ export class BusClient {
   get activePort(): number {
     return this.port;
   }
+
+  /** Returns a scoped client that prefixes all channels with {service}/ */
+  forService(name: string): BusClient {
+    return new ScopedBusClient(this, `${name}/`);
+  }
+
+  /** Returns a scoped client that prefixes all channels with {sessionId}/ */
+  forSession(id: string): BusClient {
+    return new ScopedBusClient(this, `${id}/`);
+  }
+}
+
+/**
+ * Scoped view of a BusClient — prepends a channel prefix to publish().
+ * forService/forSession compose: nested calls stack prefixes.
+ *
+ * Extends BusClient so the public `forService`/`forSession` return type is
+ * `BusClient` (callers don't need to know about the scoped wrapper).
+ */
+class ScopedBusClient extends BusClient {
+  constructor(private readonly inner: BusClient, private readonly prefix: string) {
+    super(inner.activePort); // satisfies protected constructor; port unused
+  }
+
+  override async publish(channel: string, payload: unknown): Promise<void> {
+    return this.inner.publish(this.prefix + channel, payload);
+  }
+
+  override async healthCheck(): Promise<boolean> {
+    return this.inner.healthCheck();
+  }
+
+  override get activePort(): number {
+    return this.inner.activePort;
+  }
+
+  override forService(name: string): BusClient {
+    return new ScopedBusClient(this.inner, this.prefix + name + "/");
+  }
+
+  override forSession(id: string): BusClient {
+    return new ScopedBusClient(this.inner, this.prefix + id + "/");
+  }
 }
 
 /**
