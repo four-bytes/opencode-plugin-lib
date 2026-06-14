@@ -62,7 +62,7 @@ export class BusClient {
    * Prefers ~/.local/bin/bus over bare "bus" (which relies on PATH).
    */
   private static findBusBinary(): string {
-    return join(homedir(), ".local", "bin", "four-opencode-bus"); // ~/.local/bin/four-opencode-bus
+    return join(homedir(), ".local", "bin", "four-local-bus"); // ~/.local/bin/four-local-bus
   }
 
   /**
