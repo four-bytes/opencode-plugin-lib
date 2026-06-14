@@ -1,6 +1,7 @@
 export interface ProgressBarProps {
     current: number;
     total: number;
+    width?: number | "auto" | `${number}%`;
     barWidth?: number;
     showLabel?: boolean;
     rightAlign?: boolean;
