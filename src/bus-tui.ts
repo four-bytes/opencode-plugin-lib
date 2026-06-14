@@ -107,6 +107,16 @@ export class BusTui {
     this.subs = [];
   }
 
+  /** Returns a scoped TUI bus that prefixes all channels with {service}/ */
+  forService(name: string): BusTui {
+    return new ScopedBusTui(this, `${name}/`);
+  }
+
+  /** Returns a scoped TUI bus that prefixes all channels with {sessionId}/ */
+  forSession(id: string): BusTui {
+    return new ScopedBusTui(this, `${id}/`);
+  }
+
   // ── Private ────────────────────────────────────────────
 
   private async open(): Promise<void> {
@@ -172,6 +182,39 @@ export class BusTui {
     if (patterns) {
       this.ws.send(JSON.stringify({ subscribe: patterns }));
     }
+  }
+}
+
+/**
+ * Scoped view of a BusTui — prepends a channel prefix to subscribe/publish.
+ * forService/forSession compose: nested calls stack prefixes.
+ *
+ * Extends BusTui so the public `forService`/`forSession` return type is
+ * `BusTui` (callers don't need to know about the scoped wrapper).
+ */
+class ScopedBusTui extends BusTui {
+  constructor(private readonly inner: BusTui, private readonly prefix: string) {
+    super(0); // satisfies protected constructor; port unused (delegated via inner)
+  }
+
+  override subscribe(pattern: string, callback: BusCallback): Unsubscribe {
+    return this.inner.subscribe(this.prefix + pattern, callback);
+  }
+
+  override publish(channel: string, payload: unknown): void {
+    this.inner.publish(this.prefix + channel, payload);
+  }
+
+  override close(): void {
+    this.inner.close();
+  }
+
+  override forService(name: string): BusTui {
+    return new ScopedBusTui(this.inner, this.prefix + name + "/");
+  }
+
+  override forSession(id: string): BusTui {
+    return new ScopedBusTui(this.inner, this.prefix + id + "/");
   }
 }
 

@@ -43,6 +43,10 @@ export declare class BusTui {
      * Close the WebSocket connection and stop reconnecting.
      */
     close(): void;
+    /** Returns a scoped TUI bus that prefixes all channels with {service}/ */
+    forService(name: string): BusTui;
+    /** Returns a scoped TUI bus that prefixes all channels with {sessionId}/ */
+    forSession(id: string): BusTui;
     private open;
     private scheduleReconnect;
     private updateSubscriptions;
