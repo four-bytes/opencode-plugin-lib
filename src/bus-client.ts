@@ -7,6 +7,10 @@ import type { BusEnvelope, BusHealth } from "./types.js";
 
 const BASE_URL = "http://127.0.0.1";
 
+// Spawn lock — prevents concurrent connect() calls from spawning duplicate
+// bus processes while a start is already in flight. Released on settle.
+let spawnLock: Promise<number> | null = null;
+
 /**
  * Server-side client for the plugin bus.
  * Plugins import BusClient, publish messages via HTTP POST.
@@ -67,8 +71,22 @@ export class BusClient {
 
   /**
    * Spawn the bus binary and read the port from stdout.
+   * Guarded by a module-level spawn lock so concurrent connect() calls share
+   * the same in-flight spawn instead of forking multiple bus processes.
    */
   private static async startBus(timeoutMs: number): Promise<number> {
+    if (spawnLock) return spawnLock;
+    spawnLock = BusClient.spawnBus(timeoutMs).finally(() => {
+      spawnLock = null;
+    });
+    return spawnLock;
+  }
+
+  /**
+   * Inner spawn implementation — wraps the child process in a Promise.
+   * Kept separate from startBus() so the spawn lock can be released cleanly.
+   */
+  private static spawnBus(timeoutMs: number): Promise<number> {
     const binary = BusClient.findBusBinary();
     return new Promise((resolve, reject) => {
       const child = spawn(binary, [], {
