@@ -4,6 +4,7 @@ import { createMemo } from "solid-js";
 export interface ProgressBarProps {
   current: number;
   total: number;
+  width?: number | "auto" | `${number}%`;  // outer box width, default "100%". Pass "auto" for inline use.
   barWidth?: number;
   showLabel?: boolean;
   rightAlign?: boolean;
@@ -37,7 +38,7 @@ export function ProgressBar(props: ProgressBarProps) {
   const justify = createMemo(() => (rightAlign() ? "flex-end" : "flex-start"));
 
   return (
-    <box flexDirection="row" width="100%" justifyContent={justify()}>
+    <box flexDirection="row" width={props.width ?? "100%"} justifyContent={justify()}>
       {showLabel() && <text>{`${formatNum(props.current)}/${formatNum(props.total)} `}</text>}
       <box flexDirection="row" justifyContent={justify()}>
         {Array.from(text()).map((char, i) => (
