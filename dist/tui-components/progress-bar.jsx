@@ -1,21 +1,32 @@
 /** @jsxImportSource @opentui/solid */
+import { createMemo } from "solid-js";
+function centerText(s, width) {
+    if (s.length >= width)
+        return s.slice(0, width);
+    const left = Math.floor((width - s.length) / 2);
+    return " ".repeat(left) + s + " ".repeat(Math.max(0, width - s.length - left));
+}
 function formatNum(n) {
     return n.toLocaleString("en-US");
 }
 export function ProgressBar(props) {
-    const pct = props.total > 0 ? Math.min(100, Math.max(0, (props.current / props.total) * 100)) : 0;
-    const h = props.height ?? 1;
-    const green = props.colors?.green ?? "#4caf50";
-    const orange = props.colors?.orange ?? "#ff9800";
-    const red = props.colors?.red ?? "#f44336";
-    const barColor = pct >= 80 ? red : pct >= 50 ? orange : green;
-    const showLabel = props.showLabel !== false;
-    return (<box flexDirection="row" width="100%">
-      {showLabel && (<box width="50%">
-          <text>{`${formatNum(props.current)} / ${formatNum(props.total)} (${pct.toFixed(1)}%)`}</text>
-        </box>)}
-      <box width={showLabel ? "50%" : "100%"} height={h} backgroundColor={props.trackColor ?? "#333"}>
-        <box height={h} width={`${pct}%`} backgroundColor={barColor}/>
+    const pct = createMemo(() => props.total > 0 ? (props.current / props.total) * 100 : 0);
+    const w = createMemo(() => props.barWidth ?? 10);
+    const filledCount = createMemo(() => Math.round((props.current / props.total) * w()));
+    const fillFg = createMemo(() => props.fillFg ?? "#fff");
+    const fillBg = createMemo(() => props.fillBg ?? "#4caf50");
+    const unfillFg = createMemo(() => props.unfillFg ?? "#888");
+    const unfillBg = createMemo(() => props.unfillBg ?? "#2a2a2a");
+    const text = createMemo(() => centerText(` ${pct().toFixed(1)}% `, w()));
+    const showLabel = createMemo(() => props.showLabel !== false);
+    const rightAlign = createMemo(() => props.rightAlign === true);
+    const justify = createMemo(() => (rightAlign() ? "flex-end" : "flex-start"));
+    return (<box flexDirection="row" width="100%" justifyContent={justify()}>
+      {showLabel() && <text>{`${formatNum(props.current)}/${formatNum(props.total)} `}</text>}
+      <box flexDirection="row" justifyContent={justify()}>
+        {Array.from(text()).map((char, i) => (<box backgroundColor={i < filledCount() ? fillBg() : unfillBg()}>
+            <text fg={i < filledCount() ? fillFg() : unfillFg()}>{char}</text>
+          </box>))}
       </box>
     </box>);
 }
