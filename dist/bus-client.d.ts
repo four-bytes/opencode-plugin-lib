@@ -43,6 +43,12 @@ export declare class BusClient {
     healthCheck(): Promise<boolean>;
     /** The port the bus is running on (0 = in-memory mode) */
     get activePort(): number;
+    /**
+     * Close the client. No-op for plain HTTP clients — each call already uses
+     * a fresh request. Defined here so ScopedBusClient can override it as a
+     * no-op without accidentally inheriting a future lifecycle teardown.
+     */
+    close(): void;
     /** Returns a scoped client that prefixes all channels with {service}/ */
     forService(name: string): BusClient;
     /** Returns a scoped client that prefixes all channels with {sessionId}/ */

@@ -206,7 +206,7 @@ class ScopedBusTui extends BusTui {
   }
 
   override close(): void {
-    this.inner.close();
+    // Scoped views do not own the underlying bus lifecycle
   }
 
   override forService(name: string): BusTui {
