@@ -3,6 +3,7 @@ export interface ProgressBarProps {
     total: number;
     barWidth?: number;
     showLabel?: boolean;
+    rightAlign?: boolean;
     fillFg?: string;
     fillBg?: string;
     unfillFg?: string;

@@ -6,6 +6,7 @@ export interface ProgressBarProps {
   total: number;
   barWidth?: number;
   showLabel?: boolean;
+  rightAlign?: boolean;
   fillFg?: string;
   fillBg?: string;
   unfillFg?: string;
@@ -32,11 +33,13 @@ export function ProgressBar(props: ProgressBarProps) {
   const unfillBg = createMemo(() => props.unfillBg ?? "#2a2a2a");
   const text = createMemo(() => centerText(` ${pct().toFixed(1)}% `, w()));
   const showLabel = createMemo(() => props.showLabel !== false);
+  const rightAlign = createMemo(() => props.rightAlign === true);
+  const justify = createMemo(() => (rightAlign() ? "flex-end" : "flex-start"));
 
   return (
-    <box flexDirection="row">
+    <box flexDirection="row" width="100%" justifyContent={justify()}>
       {showLabel() && <text>{`${formatNum(props.current)}/${formatNum(props.total)} `}</text>}
-      <box flexDirection="row">
+      <box flexDirection="row" justifyContent={justify()}>
         {Array.from(text()).map((char, i) => (
           <box backgroundColor={i < filledCount() ? fillBg() : unfillBg()}>
             <text fg={i < filledCount() ? fillFg() : unfillFg()}>{char}</text>
