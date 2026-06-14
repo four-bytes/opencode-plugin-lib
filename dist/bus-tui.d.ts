@@ -1,10 +1,8 @@
 import type { BusCallback, Unsubscribe } from "./types.js";
 /**
- * TUI-side client for the plugin bus.
- * Connects via WebSocket, subscribes to channels, receives real-time messages.
- *
- * Falls back to in-memory EventBus when the Go binary is not available
- * (same-process only, no cross-process IPC, no wildcard matching).
+ * TUI-side client for the plugin bus. Connects via WebSocket, subscribes to
+ * channels, receives real-time messages. Throws on `connect()` if the Go bus
+ * is not available — use `new MemoryBusTui()` explicitly for in-process mode.
  *
  * Usage:
  *   const bus = await BusTui.connect();
@@ -23,8 +21,7 @@ export declare class BusTui {
     private closed;
     protected constructor(port: number);
     /**
-     * Connect to the plugin bus via WebSocket.
-     * Falls back to in-memory EventBus if the Go binary is not available.
+     * Connect to the plugin bus via WebSocket. Throws if the Go bus is not available.
      */
     static connect(timeoutMs?: number): Promise<BusTui>;
     /**
