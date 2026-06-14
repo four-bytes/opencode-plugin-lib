@@ -234,7 +234,7 @@ class ScopedBusTui extends BusTui {
  * in-process EventBus. Wildcard patterns are NOT supported; use the
  * real Go bus for cross-process IPC and wildcard matching.
  */
-class MemoryBusTui extends BusTui {
+export class MemoryBusTui extends BusTui {
   private memorySubs: Map<string, Unsubscribe> = new Map();
 
   constructor() {

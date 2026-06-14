@@ -48,3 +48,22 @@ export declare class BusTui {
     private scheduleReconnect;
     private updateSubscriptions;
 }
+/**
+ * In-memory TUI client. Implements same API as BusTui.
+ * Uses shared MemoryBus singleton — works within same process only.
+ * Port is 0 (sentinel value for in-memory mode).
+ *
+ * Opt-in: instantiate directly with `new MemoryBusTui()`. `BusTui.connect()`
+ * no longer falls back to this class automatically.
+ *
+ * No WebSocket connection needed — messages flow through the shared
+ * in-process EventBus. Wildcard patterns are NOT supported; use the
+ * real Go bus for cross-process IPC and wildcard matching.
+ */
+export declare class MemoryBusTui extends BusTui {
+    private memorySubs;
+    constructor();
+    subscribe(pattern: string, callback: BusCallback): Unsubscribe;
+    publish(channel: string, payload: unknown): void;
+    close(): void;
+}
