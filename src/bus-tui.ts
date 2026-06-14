@@ -164,6 +164,15 @@ export class BusTui {
   private scheduleReconnect(): void {
     if (this.closed) return;
     this.reconnectTimer = setTimeout(async () => {
+      // Re-read the port file — the bus may have restarted on a new port
+      // (e.g. after a crash) and the cached port would now be dead.
+      this.port = 0;
+      try {
+        const port = await discoverPort(2000);
+        if (port > 0) this.port = port;
+      } catch {
+        // discoverPort failed — keep port=0, open() will report and retry
+      }
       try {
         await this.open();
       } catch {
