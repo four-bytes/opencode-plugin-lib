@@ -181,6 +181,15 @@ export class BusClient {
     return this.port;
   }
 
+  /**
+   * Close the client. No-op for plain HTTP clients — each call already uses
+   * a fresh request. Defined here so ScopedBusClient can override it as a
+   * no-op without accidentally inheriting a future lifecycle teardown.
+   */
+  close(): void {
+    // No-op at base level. HTTP requests are stateless.
+  }
+
   /** Returns a scoped client that prefixes all channels with {service}/ */
   forService(name: string): BusClient {
     return new ScopedBusClient(this, `${name}/`);
@@ -210,6 +219,10 @@ class ScopedBusClient extends BusClient {
 
   override async healthCheck(): Promise<boolean> {
     return this.inner.healthCheck();
+  }
+
+  override close(): void {
+    // Scoped views do not own the underlying bus lifecycle
   }
 
   override get activePort(): number {
